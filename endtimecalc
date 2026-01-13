@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ATS Exam Time Adjustment Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 520px;
+      margin: 20px auto;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+    }
+    button {
+      margin-top: 16px;
+      padding: 10px;
+      width: 100%;
+      font-size: 16px;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+    }
+    .notes {
+      margin-top: 12px;
+      padding: 10px;
+      background: #eef5ff;
+      border: 1px solid #aac4ff;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<h2>ATS Exam End-Time Calculator</h2>
+
+<label>Exam Start Time</label>
+<input type="time" id="startTime">
+
+<label>Total Allotted Minutes (includes all breaks)</label>
+<input type="number" id="totalMinutes" placeholder="e.g. 105">
+
+<label>Total Approved Break Minutes</label>
+<input type="number" id="approvedBreaks" placeholder="e.g. 15">
+
+<label>Break Minutes Taken</label>
+<input type="number" id="breaksTaken" placeholder="e.g. 6">
+
+<button onclick="calculateEndTime()">Calculate Adjusted End Time</button>
+
+<div class="result" id="output"></div>
+<div class="notes" id="notesOutput"></div>
+
+<script>
+function formatTime(date) {
+  return date.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+
+function calculateEndTime() {
+  const startTime = document.getElementById("startTime").value;
+  const totalMinutes = parseInt(document.getElementById("totalMinutes").value);
+  const approvedBreaks = parseInt(document.getElementById("approvedBreaks").value);
+  const breaksTaken = parseInt(document.getElementById("breaksTaken").value);
+
+  if (!startTime || isNaN(totalMinutes) || isNaN(approvedBreaks) || isNaN(breaksTaken)) {
+    document.getElementById("output").innerText = "Please fill out all fields.";
+    document.getElementById("notesOutput").innerText = "";
+    return;
+  }
+
+  if (breaksTaken > approvedBreaks) {
+    document.getElementById("output").innerText =
+      "Break minutes taken cannot exceed approved break minutes.";
+    document.getElementById("notesOutput").innerText = "";
+    return;
+  }
+
+  const [hours, minutes] = startTime.split(":").map(Number);
+  const startDate = new Date();
+  startDate.setHours(hours, minutes, 0, 0);
+
+  const scheduledEnd = new Date(startDate.getTime() + totalMinutes * 60000);
+  const unusedBreaks = approvedBreaks - breaksTaken;
+  const adjustedEnd = new Date(scheduledEnd.getTime() - unusedBreaks * 60000);
+
+  document.getElementById("output").innerHTML = `
+    <strong>Exam Start Time:</strong> ${formatTime(startDate)}<br><br>
+
+    <strong>Scheduled End Time (maximum, with all breaks):</strong><br>
+    ${formatTime(scheduledEnd)}<br><br>
+
+    <strong>Break Minutes Taken:</strong> ${breaksTaken}<br>
+    <strong>Unused Break Minutes:</strong> ${unusedBreaks}<br><br>
+
+    <strong>Adjusted End Time (enter in RegisterBlast):</strong><br>
+    ${formatTime(adjustedEnd)}
+  `;
+
+  document.getElementById("notesOutput").innerText =
+`RegisterBlast Note:
+Student approved for ${approvedBreaks} minutes of breaks.
+Student took ${breaksTaken} minutes of breaks.
+Unused break time (${unusedBreaks} minutes) was removed from the scheduled exam time.
+Exam end time adjusted accordingly.`;
+}
+</script>
+
+</body>
+</html>
